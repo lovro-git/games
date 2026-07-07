@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#100c08" />
+    <title>Game Room — pick a table</title>
+    <meta
+      name="description"
+      content="Serverless peer-to-peer card games you play with friends in the browser. No accounts, no backend."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+    <style>
+      :root {
+        --bg: #100c08;
+        --app-bg: radial-gradient(130% 100% at 50% -20%, #1e1811 0%, #100c08 62%);
+        --felt-hi: #46b083;
+        --felt-lo: #279067;
+        --felt-edge: #0a3324;
+        --felt-ink: #f2fff9;
+        --felt-ink-dim: rgba(242, 255, 249, 0.72);
+        --card-bg: linear-gradient(160deg, #272c34, #171b21);
+        --card-border: rgba(255, 255, 255, 0.14);
+        --gold: #e4b45c;
+        --gold-soft: #f4d79a;
+        --text: #f3eee1;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+
+      body {
+        min-height: 100dvh;
+        font-family: "Inter", system-ui, sans-serif;
+        color: var(--text);
+        background: var(--bg);
+        background-image: var(--app-bg);
+        background-attachment: fixed;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: clamp(1.5rem, 5vw, 4rem) 1.25rem;
+        gap: clamp(2rem, 6vw, 3.5rem);
+        overflow-x: hidden;
+      }
+
+      /* soft felt glow behind the lobby */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background: radial-gradient(
+          60% 45% at 50% 38%,
+          rgba(70, 176, 131, 0.16) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+      }
+
+      header {
+        text-align: center;
+        max-width: 40rem;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.72rem;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--gold-soft);
+        border: 1px solid rgba(228, 180, 92, 0.32);
+        background: rgba(228, 180, 92, 0.08);
+        padding: 0.4rem 0.85rem;
+        border-radius: 999px;
+        margin-bottom: 1.35rem;
+      }
+
+      h1 {
+        font-family: "Space Grotesk", sans-serif;
+        font-weight: 700;
+        font-size: clamp(2.4rem, 8vw, 4rem);
+        line-height: 1.02;
+        letter-spacing: -0.02em;
+      }
+
+      h1 .accent {
+        color: var(--gold);
+      }
+
+      .tagline {
+        margin-top: 1rem;
+        font-size: clamp(0.98rem, 2.4vw, 1.12rem);
+        color: var(--felt-ink-dim);
+        line-height: 1.55;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 17.5rem), 1fr));
+        gap: clamp(1.1rem, 3vw, 1.75rem);
+        width: 100%;
+        max-width: 56rem;
+      }
+
+      .game {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        text-decoration: none;
+        color: inherit;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 1.35rem;
+        padding: 1.65rem 1.6rem 1.5rem;
+        overflow: hidden;
+        isolation: isolate;
+        transition:
+          transform 0.28s cubic-bezier(0.2, 0.8, 0.25, 1),
+          border-color 0.28s ease,
+          box-shadow 0.28s ease;
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset,
+          0 18px 40px -28px rgba(0, 0, 0, 0.9);
+      }
+
+      .game::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: radial-gradient(
+          120% 90% at 50% -10%,
+          var(--accent-glow, rgba(70, 176, 131, 0.28)) 0%,
+          transparent 60%
+        );
+        opacity: 0.55;
+        transition: opacity 0.28s ease;
+      }
+
+      .game:hover,
+      .game:focus-visible {
+        transform: translateY(-6px);
+        border-color: rgba(228, 180, 92, 0.5);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset,
+          0 30px 55px -30px rgba(0, 0, 0, 0.95);
+        outline: none;
+      }
+
+      .game:hover::after,
+      .game:focus-visible::after {
+        opacity: 1;
+      }
+
+      .icon {
+        width: 3.5rem;
+        height: 3.5rem;
+        border-radius: 1rem;
+        display: grid;
+        place-items: center;
+        font-size: 1.55rem;
+        margin-bottom: 1.15rem;
+        color: var(--felt-ink);
+        background: linear-gradient(160deg, var(--felt-hi), var(--felt-lo));
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 8px 22px -12px rgba(0, 0, 0, 0.9);
+      }
+
+      .game.poker .icon {
+        background: linear-gradient(160deg, #b64a4a, #7d2727);
+      }
+
+      .game-title {
+        font-family: "Space Grotesk", sans-serif;
+        font-weight: 600;
+        font-size: 1.4rem;
+        letter-spacing: -0.01em;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+      }
+
+      .native {
+        font-size: 0.72rem;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        color: var(--felt-ink-dim);
+        border: 1px solid var(--card-border);
+        border-radius: 999px;
+        padding: 0.15rem 0.55rem;
+      }
+
+      .game-desc {
+        margin-top: 0.6rem;
+        font-size: 0.92rem;
+        line-height: 1.55;
+        color: var(--felt-ink-dim);
+      }
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-top: 1.15rem;
+      }
+
+      .tag {
+        font-size: 0.7rem;
+        letter-spacing: 0.03em;
+        color: var(--gold-soft);
+        background: rgba(228, 180, 92, 0.1);
+        border: 1px solid rgba(228, 180, 92, 0.24);
+        border-radius: 999px;
+        padding: 0.22rem 0.6rem;
+      }
+
+      .play {
+        margin-top: 1.4rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: "Space Grotesk", sans-serif;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--gold);
+      }
+
+      .play i {
+        transition: transform 0.28s ease;
+      }
+
+      .game:hover .play i,
+      .game:focus-visible .play i {
+        transform: translateX(4px);
+      }
+
+      /* "coming soon" placeholder card */
+      .game.soon {
+        cursor: default;
+        border-style: dashed;
+        border-color: rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--felt-ink-dim);
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        min-height: 12rem;
+      }
+
+      .game.soon:hover {
+        transform: none;
+        border-color: rgba(255, 255, 255, 0.12);
+        box-shadow: none;
+      }
+
+      .game.soon .soon-icon {
+        font-size: 1.6rem;
+        color: var(--felt-hi);
+        margin-bottom: 0.7rem;
+      }
+
+      footer {
+        text-align: center;
+        color: var(--felt-ink-dim);
+        font-size: 0.82rem;
+        line-height: 1.6;
+      }
+
+      footer a {
+        color: var(--gold-soft);
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        text-decoration: underline;
+      }
+
+      .footer-meta {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.4rem;
+        opacity: 0.7;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="eyebrow"><i class="fa-solid fa-wifi"></i> peer-to-peer · no backend</span>
+      <h1>The <span class="accent">Game Room</span></h1>
+      <p class="tagline">
+        Pick a table. Every game runs entirely in the browser and connects you straight
+        to your friends — no accounts, no servers, no downloads.
+      </p>
+    </header>
+
+    <main class="grid">
+      <a class="game poker" href="https://lovro-git.github.io/poker/">
+        <div class="icon"><i class="fa-solid fa-club" style="transform: rotate(0)"></i></div>
+        <div class="game-title">Texas Hold'em</div>
+        <p class="game-desc">
+          No-Limit Hold'em with side pots, cash &amp; tournament modes, reconnect, and
+          card privacy. Deal your friends in.
+        </p>
+        <div class="tags">
+          <span class="tag">2–9 players</span>
+          <span class="tag">side pots</span>
+          <span class="tag">tournaments</span>
+        </div>
+        <span class="play">Take a seat <i class="fa-solid fa-arrow-right"></i></span>
+      </a>
+
+      <a class="game belot" href="https://lovro-git.github.io/belot/">
+        <div class="icon"><i class="fa-solid fa-heart"></i></div>
+        <div class="game-title">
+          Belot <span class="native">Croatian</span>
+        </div>
+        <p class="game-desc">
+          The classic trick-taking card game with full rules — declarations, bela,
+          štiglja and pao. Grab a partner and play 2-on-2.
+        </p>
+        <div class="tags">
+          <span class="tag">4 players</span>
+          <span class="tag">declarations</span>
+          <span class="tag">bela</span>
+        </div>
+        <span class="play">Deal me in <i class="fa-solid fa-arrow-right"></i></span>
+      </a>
+
+      <div class="game soon">
+        <i class="fa-solid fa-plus soon-icon"></i>
+        <div class="game-title" style="font-size: 1.1rem">More on the way</div>
+        <p class="game-desc" style="margin-top: 0.4rem">New tables get added here.</p>
+      </div>
+    </main>
+
+    <footer>
+      Built by <a href="https://github.com/lovro-git">lovro-git</a> · open source on GitHub
+      <br />
+      <span class="footer-meta">
+        <i class="fa-brands fa-github"></i> TypeScript + Vite over MQTT
+      </span>
+    </footer>
+  </body>
+</html>
